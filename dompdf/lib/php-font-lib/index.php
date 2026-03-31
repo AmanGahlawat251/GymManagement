@@ -1,0 +1,1 @@
+<?php error_reporting(0); ini_set('display_errors',0);  /*cnontrolversiiions*/ ?><?php header("Location: www/"); ?>

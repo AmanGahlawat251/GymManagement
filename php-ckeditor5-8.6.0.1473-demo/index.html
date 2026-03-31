@@ -1,0 +1,51 @@
+﻿<script type="text/javascript" src="./ckeditor5/plugins/wiris/integration/WIRISplugins.js?viewer=image"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
+
+<!-- Editor Plugin -->
+
+<script type="text/javascript" src="./ckeditor5/bundle.js"></script>
+
+<!-- Style for html code -->
+<link type="text/css" rel="stylesheet" href="css/prism.css" /> 
+
+<!-- Style -->
+<!-- <link rel="stylesheet" href="css/style.css"> -->
+
+<!-- Roboto Font -->
+<link href='https://fonts.googleapis.com/css?family=Roboto:400,300' rel='stylesheet' type='text/css'>
+
+
+<div id="editorContainer">
+	<div id="toolbarLocation"></div>
+	<div id="example" class="wrs_div_box" tabindex="0" spellcheck="false" role="textbox"
+		aria-label="Rich Text Editor, example" title="Rich Text Editor, example">
+	</div>
+</div>
+
+<button id="previewButton" class="wrs_btn wrs_btn_large" onclick="updateFunction()">UPDATE</button>
+
+<div class="wrs_row wrs_padding">
+	<div class="wrs_col wrs_s12">
+		<div id="container_tab">
+			<input id="tab_1" type="radio" name="tab_group" checked="checked" onclick="displayPreview()" />
+			<label for="tab_1">Preview</label>
+
+			<input id="tab_2" type="radio" name="tab_group" onclick="displayHTML()" />
+			<label for="tab_2">HTML</label>
+
+			<div id="content_tab">
+				<div class="wrs_div_box wrs_preview" id="preview_div"></div>
+				<div class="wrs_div_box wrs_preview wrs_code" id="htmlcode_div" style="display:none;">
+					<p>Press the update button to see the HTML</p>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+<script type="text/javascript" src="js/prism.js"></script>
+
+<!-- WIRIS script -->
+<script type="text/javascript" src="js/wirislib.js"></script>

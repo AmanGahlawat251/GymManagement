@@ -1,0 +1,111 @@
+/* Evosapiens Movement - responsive overrides (mobile/tablet) */
+
+/* Keep nav header full-width on smaller screens */
+@media (max-width: 991.98px) {
+  .nav-header {
+    width: 100% !important;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Ensure hamburger (sidebar toggle) is always visible */
+  .nav-header .nav-control {
+    margin-left: 0 !important;
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 9999;
+  }
+
+  /* Brand stays centered-ish and doesn’t hide the toggle */
+  .nav-header .brand-logo {
+    margin-left: 52px !important;
+    margin-right: 12px !important;
+    max-width: calc(100% - 70px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Hide brand text on mobile/tablet (show logo only) */
+  .nav-header .brand-logo .brand-title {
+    display: none !important;
+  }
+
+  /* Header: hide extra/empty profile item */
+  .header .header-right > li:first-child {
+    display: none !important;
+  }
+
+  /* Header: show only avatar (hide name/login text) */
+  .header .header-right .profile-text {
+    display: none !important;
+  }
+
+  /* Keep avatar compact */
+  .header .header-right .header-media img {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  /* Dropdown should be visible on mobile */
+  .header .dropdown-menu {
+    z-index: 100000 !important;
+    max-width: 90vw;
+  }
+}
+
+/* Prevent name/login text overflow in dropdown */
+.header .dropdown-menu .products {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header .dropdown-menu .products > div {
+  min-width: 0;
+}
+.header .dropdown-menu .products h6,
+.header .dropdown-menu .products span {
+  display: block;
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Offcanvas panels should fit mobile screens */
+@media (max-width: 575.98px) {
+  .offcanvas.offcanvas-end {
+    width: 100% !important;
+  }
+}
+
+/* Make tables reliably scroll on small screens */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive > .table {
+  min-width: 720px;
+}
+
+/* Sidebar icon standardization (FontAwesome) */
+.deznav .menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.deznav .menu-icon i.fa {
+  font-size: 18px;
+  line-height: 1;
+  /* Ensure correct icon font to avoid garbled glyphs like 'FOCO' */
+  font-family: "FontAwesome";
+}
+
+
+
