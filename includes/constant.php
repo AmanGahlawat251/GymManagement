@@ -6,24 +6,24 @@ if(!isset($_SESSION))
 }
 
 
- if($_SERVER['HTTP_HOST'] == 'elitecodeexperts.com' || $_SERVER['HTTP_HOST'] == 'elitecodeexperts.com')
+ if($_SERVER['HTTP_HOST'] == 'elitecodeexperts.com' || $_SERVER['HTTP_HOST'] == 'www.elitecodeexperts.com')
 {
-	
-	define('APPLICATION_URL',"https://elitecodeexperts.com/");
-	define('APPLICATION_domain',"swimgymacademy.com");
+	print_r($_SERVER['DOCUMENT_ROOT']);exit;
+	define('APPLICATION_URL',"https://elitecodeexperts.com/gymManagement");
+	define('APPLICATION_domain',"elitecodeexperts.com");
 	define('ENVIRONMENT',"LIVE");
 	################## DB ##########################################
 	define('HOST', 'localhost');
-	define('USER', 'u583683241_swimgym');
-	define('PASSWORD', 'jG#97r5V39hv'); 
-	define('DATABASE', 'u583683241_swimdata');
+	define('USER', 'u770023966_elite_gyms');
+	define('PASSWORD', '2Hy&fPz~'); 
+	define('DATABASE', 'u770023966_gymManagment');
 	################## DB ############################################
-    define("ABSOLUTE_ROOT_PATH", $_SERVER['DOCUMENT_ROOT'].'/backend/');
-    define('Email_domain',"swimgymacademy.com");
+    define("ABSOLUTE_ROOT_PATH", $_SERVER['DOCUMENT_ROOT'].'/gymManagement/');
+    define('Email_domain',"elitecodeexperts.com");
 	define('FROM_EMAIL', 'info@'.Email_domain);
 	define('EMAIL_HOST', 'smtp.hostinger.com');
-    define('USER_EMAIL', 'admin@swimgymacademy.com');
-	define('MAIL_PASSWORD', 'Sgar@2024'); 
+    define('USER_EMAIL', 'info@elitecodeexperts.com');
+	define('MAIL_PASSWORD', 'p/2jNEvjT'); 
 	define('PORT', 587);
 }
 
