@@ -8,8 +8,7 @@ if(!isset($_SESSION))
 
  if($_SERVER['HTTP_HOST'] == 'elitecodeexperts.com' || $_SERVER['HTTP_HOST'] == 'www.elitecodeexperts.com')
 {
-	print_r($_SERVER['DOCUMENT_ROOT']);exit;
-	define('APPLICATION_URL',"https://elitecodeexperts.com/gymManagement");
+	define('APPLICATION_URL',"https://elitecodeexperts.com/gymManagement/");
 	define('APPLICATION_domain',"elitecodeexperts.com");
 	define('ENVIRONMENT',"LIVE");
 	################## DB ##########################################
@@ -53,10 +52,10 @@ else
       error_reporting(0);
       //ini_set('display_errors', 1); ini_set('display_startup_errors', 1); error_reporting(E_ALL);
 }
-define('APPLICATION_NAME',"Evosapiens Movement");
-define('APP_NAME',"Evosapiens Movement");
-define('COMPANY_NAME',"Evosapiens Movement");
-define('APP_FULL_NAME',"Evosapiens Movement");
+define('APPLICATION_NAME',"Elite Code Experts");
+define('APP_NAME',"Elite Code Experts");
+define('COMPANY_NAME',"Elite Code Experts");
+define('APP_FULL_NAME',"Elite Code Experts");
 define('DEVELOPER_EMAIL', 'lavii15march@gmail.com'); 
 define('DEVELOPER_NAME', 'Aman Gahlawat'); 
 define('EXCEPTION_EMAIL', 'exception@'.APPLICATION_domain);
@@ -85,7 +84,7 @@ define('ENQUIRIES', 'tbl_enquiry');
 define('HISTORY', 'tbl_membership_history');
 define('NOTIFICATIONS', 'tbl_sent_notifications');
 define('ATTENDANCE', 'tbl_attendance');
-define('APPLICATION_FULL_NAME',"Evosapiens Movement");
+define('APPLICATION_FULL_NAME',"Elite Code Experts");
 define('LOGO_PATH',APPLICATION_URL."images/logos/logo.png");
 define('DEFAULT_PROFILE_PICTURE',APPLICATION_URL."images/avatar/1.png");
 define('LOGO_ALT',APPLICATION_FULL_NAME);
