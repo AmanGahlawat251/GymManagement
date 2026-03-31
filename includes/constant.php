@@ -17,7 +17,7 @@ if(!isset($_SESSION))
 	define('PASSWORD', '2Hy&fPz~'); 
 	define('DATABASE', 'u770023966_gymManagment');
 	################## DB ############################################
-    define("ABSOLUTE_ROOT_PATH", $_SERVER['DOCUMENT_ROOT'].'/gymManagement/');
+    define("ABSOLUTE_ROOT_PATH", $_SERVER['DOCUMENT_ROOT'].'/GymManagement/');
     define('Email_domain',"elitecodeexperts.com");
 	define('FROM_EMAIL', 'info@'.Email_domain);
 	define('EMAIL_HOST', 'smtp.hostinger.com');
@@ -85,7 +85,7 @@ define('HISTORY', 'tbl_membership_history');
 define('NOTIFICATIONS', 'tbl_sent_notifications');
 define('ATTENDANCE', 'tbl_attendance');
 define('APPLICATION_FULL_NAME',"Elite Code Experts");
-define('LOGO_PATH',APPLICATION_URL."images/logos/logo.png");
+define('LOGO_PATH',APPLICATION_URL."images/logos/logo112.png");
 define('DEFAULT_PROFILE_PICTURE',APPLICATION_URL."images/avatar/1.png");
 define('LOGO_ALT',APPLICATION_FULL_NAME);
 define('FAVICON_PATH',APPLICATION_URL."images/logos/logo.png");
