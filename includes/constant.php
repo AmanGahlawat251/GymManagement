@@ -8,7 +8,7 @@ if(!isset($_SESSION))
 
  if($_SERVER['HTTP_HOST'] == 'elitecodeexperts.com' || $_SERVER['HTTP_HOST'] == 'www.elitecodeexperts.com')
 {
-	define('APPLICATION_URL',"https://elitecodeexperts.com/gymManagement/");
+	define('APPLICATION_URL',"https://elitecodeexperts.com/GymManagement/");
 	define('APPLICATION_domain',"elitecodeexperts.com");
 	define('ENVIRONMENT',"LIVE");
 	################## DB ##########################################
