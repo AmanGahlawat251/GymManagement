@@ -6,10 +6,10 @@ if(!isset($_SESSION))
 }
 
 
- if($_SERVER['HTTP_HOST'] == 'swimgymacademy.com' || $_SERVER['HTTP_HOST'] == 'www.swimgymacademy.com')
+ if($_SERVER['HTTP_HOST'] == 'elitecodeexperts.com' || $_SERVER['HTTP_HOST'] == 'elitecodeexperts.com')
 {
 	
-	define('APPLICATION_URL',"https://swimgymacademy.com/");
+	define('APPLICATION_URL',"https://elitecodeexperts.com/");
 	define('APPLICATION_domain',"swimgymacademy.com");
 	define('ENVIRONMENT',"LIVE");
 	################## DB ##########################################
