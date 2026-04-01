@@ -237,7 +237,7 @@ if ($tab == 'login') {
 				if($send_em == 1){
 					
 				
-				$sql_u = "INSERT INTO " . REVENUE . " SET member_id = '" . $member_id . "', amount_received = '" . $paid . "' , total_amount = '" . $total_amount . "', pending_amount = '" . $pending_amount . "', payment_status = '" . $payment_status . "', start_date = '" . $user_doj . "' , end_date = '" . $end_date . "' , received_on = '".date('Y-m-d H:i:s')."', payment_type = 'MEMBERSHIP'";
+				$sql_u = "INSERT INTO " . REVENUE . " SET member_id = '" . $member_id . "', amount_received = '" . $paid . "' , total_amount = '" . $total_amount . "', pending_amount = '" . $pending_amount . "', payment_status = '" . $payment_status . "', payment_mode='" . addslashes($mode) . "', start_date = '" . $user_doj . "' , end_date = '" . $end_date . "' , received_on = '".date('Y-m-d H:i:s')."', payment_type = 'MEMBERSHIP'";
 				$res = $mysqli->executeQry($sql_u);
 				
 				$file = $mysqli->generateInvoice($last_id,'Single');
