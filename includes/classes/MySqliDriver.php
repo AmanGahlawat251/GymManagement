@@ -729,7 +729,22 @@ function option($name)
 			{
 				if (isset($url['1']))
 				{
-					$spliturl = explode("&", $this->decode($url['1']));
+					// Primary expected format: index.php?{ENCODED("stat=...&k=v")}
+					// Backward/loose format support: index.php?{ENCODED("stat=...")}&k=v
+					$rawQuery = $url['1'];
+					$decodedQuery = $this->decode($rawQuery);
+
+					// If full decode doesn't look like a query string, try decoding only the first token
+					// before '&' and then append the raw remainder (which is already plain).
+					if (empty($decodedQuery) || strpos($decodedQuery, 'stat=') === false) {
+						$rawParts = explode('&', $rawQuery, 2);
+						$decodedFirst = $this->decode($rawParts[0]);
+						if (!empty($decodedFirst) && strpos($decodedFirst, 'stat=') !== false) {
+							$decodedQuery = $decodedFirst . (isset($rawParts[1]) ? '&' . $rawParts[1] : '');
+						}
+					}
+
+					$spliturl = explode("&", (string)$decodedQuery);
 					//print_r($spliturl); die;
 				}
 				else
@@ -1699,7 +1714,8 @@ function generate_family_id()
 {
 $dompdf = new Dompdf();
 $dompdf->loadHtml($content);
-if ($paper_size == 'A5') {
+$paper_size = isset($papersize) ? strtoupper(trim((string)$papersize)) : '';
+if ($paper_size === 'A5') {
         $dompdf->setPaper('A5', 'portrait');
     } else {
         $dompdf->setPaper('A4', 'portrait');

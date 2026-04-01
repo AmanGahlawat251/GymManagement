@@ -237,7 +237,7 @@ if ($tab == 'login') {
 				if($send_em == 1){
 					
 				
-				$sql_u = "INSERT INTO " . REVENUE . " SET member_id = '" . $member_id . "', amount_received = '" . $paid . "' , total_amount = '" . $total_amount . "', pending_amount = '" . $pending_amount . "', payment_status = '" . $payment_status . "', start_date = '" . $user_doj . "' , end_date = '" . $end_date . "' , received_on = '".date('Y-m-d H:i:s')."', payment_type = 'MEMBERSHIP'";
+				$sql_u = "INSERT INTO " . REVENUE . " SET member_id = '" . $member_id . "', amount_received = '" . $paid . "' , total_amount = '" . $total_amount . "', pending_amount = '" . $pending_amount . "', payment_status = '" . $payment_status . "', payment_mode='" . addslashes($mode) . "', start_date = '" . $user_doj . "' , end_date = '" . $end_date . "' , received_on = '".date('Y-m-d H:i:s')."', payment_type = 'MEMBERSHIP'";
 				$res = $mysqli->executeQry($sql_u);
 				
 				$file = $mysqli->generateInvoice($last_id,'Single');
@@ -1061,54 +1061,130 @@ else if ($tab == 'add_plans') {
  		$response['msg'] = "Unable to delete schedule.";
  	}
  	$record_id = $id;
- } else if ($tab == 'enroll_class_member') {
+ } else if ($tab == 'get_class_remaining_capacity') {
  	$class_schedule_id = isset($class_schedule_id) ? (int)$class_schedule_id : 0;
- 	$member_id = isset($member_id) ? (int)$member_id : 0;
 
- 	if ($class_schedule_id < 1 || $member_id < 1) {
+ 	if ($class_schedule_id < 1) {
  		$response['msg_code'] = "05";
- 		$response['msg'] = "Invalid schedule or member.";
+ 		$response['msg'] = "Invalid schedule.";
  	} else {
- 		// Duplicate check
-		$dup = $mysqli->executeQry("SELECT id FROM " . CLASS_MEMBERS . " WHERE class_schedule_id = '" . $class_schedule_id . "' AND member_id = '" . $member_id . "' AND status='Enrolled' LIMIT 1");
-		$dup_row = $dup ? $mysqli->fetch_array($dup) : false;
- 		if ($dup_row && isset($dup_row['id'])) {
- 			$response['msg_code'] = "05";
- 			$response['msg'] = "Member already enrolled for this schedule.";
- 		} else {
- 			$sql_cap = "SELECT c.capacity,
+ 		$sql_cap = "SELECT c.capacity,
  								(SELECT COUNT(*) FROM " . CLASS_MEMBERS . " cm2
  								 WHERE cm2.class_schedule_id = s.id AND cm2.status='Enrolled') AS enrolled_count
  							FROM " . CLASS_SCHEDULE . " s
  							JOIN " . CLASSES . " c ON c.id = s.class_id
  							WHERE s.id = '" . $class_schedule_id . "'
  							LIMIT 1";
- 			$res_cap = $mysqli->executeQry($sql_cap);
-			$cap_row = $res_cap ? $mysqli->fetch_array($res_cap) : false;
- 			$capacity = isset($cap_row['capacity']) ? (int)$cap_row['capacity'] : 0;
- 			$enrolled_count = isset($cap_row['enrolled_count']) ? (int)$cap_row['enrolled_count'] : 0;
 
- 			if ($capacity > 0 && $enrolled_count >= $capacity) {
- 				$response['msg_code'] = "05";
- 				$response['msg'] = "This class is full (capacity reached).";
- 			} else {
- 				$sql = "INSERT INTO " . CLASS_MEMBERS . " SET
- 					class_schedule_id = '" . $class_schedule_id . "',
- 					member_id = '" . $member_id . "',
- 					status = 'Enrolled',
- 					created_on = '" . date('Y-m-d H:i:s') . "'";
- 				$res = $mysqli->executeQry($sql);
- 				if ($res > 0) {
- 					$response['msg_code'] = "00";
- 					$response['msg'] = "Member enrolled successfully.";
- 					$record_id = $mysqli->insert_id();
- 				} else {
- 					$response['msg_code'] = "05";
- 					$response['msg'] = "Unable to enroll member at this time.";
- 				}
- 			}
- 		}
+ 		$res_cap = $mysqli->executeQry($sql_cap);
+ 		$cap_row = $res_cap ? $mysqli->fetch_array($res_cap) : false;
+ 		$capacity = isset($cap_row['capacity']) ? (int)$cap_row['capacity'] : 0;
+ 		$enrolled_count = isset($cap_row['enrolled_count']) ? (int)$cap_row['enrolled_count'] : 0;
+ 		$remaining = $capacity > 0 ? max(0, $capacity - $enrolled_count) : 0;
+
+ 		$response['msg_code'] = "00";
+ 		$response['msg'] = "ok";
+ 		$response['remaining'] = (int)$remaining;
  	}
+
+ 	$record_id = $class_schedule_id;
+ } else if ($tab == 'enroll_class_member') {
+ 	$class_schedule_id = isset($class_schedule_id) ? (int)$class_schedule_id : 0;
+	$member_ids_raw = [];
+	if (isset($member_ids) && is_array($member_ids)) {
+		$member_ids_raw = $member_ids;
+	} elseif (isset($member_ids)) {
+		$member_ids_raw = [$member_ids];
+	} elseif (isset($member_id)) {
+		$member_ids_raw = [$member_id]; // backward compatible
+	}
+
+	$member_ids = [];
+	foreach ($member_ids_raw as $mid) {
+		$mid = (int)$mid;
+		if ($mid > 0) $member_ids[$mid] = $mid;
+	}
+	$member_ids = array_values($member_ids);
+
+	if ($class_schedule_id < 1 || count($member_ids) < 1) {
+		$response['msg_code'] = "05";
+		$response['msg'] = "Invalid schedule or members.";
+	} else {
+		// Current capacity
+		$sql_cap = "SELECT c.capacity,
+								(SELECT COUNT(*) FROM " . CLASS_MEMBERS . " cm2
+								 WHERE cm2.class_schedule_id = s.id AND cm2.status='Enrolled') AS enrolled_count
+							FROM " . CLASS_SCHEDULE . " s
+							JOIN " . CLASSES . " c ON c.id = s.class_id
+							WHERE s.id = '" . $class_schedule_id . "'
+							LIMIT 1";
+		$res_cap = $mysqli->executeQry($sql_cap);
+		$cap_row = $res_cap ? $mysqli->fetch_array($res_cap) : false;
+		$capacity = isset($cap_row['capacity']) ? (int)$cap_row['capacity'] : 0;
+		$enrolled_count = isset($cap_row['enrolled_count']) ? (int)$cap_row['enrolled_count'] : 0;
+		$remaining = $capacity > 0 ? max(0, $capacity - $enrolled_count) : 0;
+
+		if ($capacity > 0 && $remaining < 1) {
+			$response['msg_code'] = "05";
+			$response['msg'] = "This class is full (capacity reached).";
+			$record_id = $class_schedule_id;
+		} else {
+			// Remove duplicates for this schedule.
+			$in = implode(',', array_map('intval', $member_ids));
+			$dupQ = $mysqli->executeQry("
+				SELECT member_id
+				FROM " . CLASS_MEMBERS . "
+				WHERE class_schedule_id = '" . $class_schedule_id . "'
+				  AND member_id IN (" . $in . ")
+				  AND status='Enrolled'
+			");
+
+			$existing = [];
+			if ($dupQ) {
+				while ($drow = $mysqli->fetch_assoc($dupQ)) {
+					$existing[(int)$drow['member_id']] = true;
+				}
+			}
+
+			$eligible = [];
+			foreach ($member_ids as $mid) {
+				if (!isset($existing[$mid])) $eligible[] = $mid;
+			}
+
+			$added = 0;
+			$skipped = count($member_ids) - count($eligible);
+
+			foreach ($eligible as $mid) {
+				if ($capacity > 0 && $added >= $remaining) {
+					$skipped++;
+					continue;
+				}
+
+				$sql = "INSERT INTO " . CLASS_MEMBERS . " SET
+					class_schedule_id = '" . $class_schedule_id . "',
+					member_id = '" . (int)$mid . "',
+					status = 'Enrolled',
+					created_on = '" . date('Y-m-d H:i:s') . "'";
+
+				$res = $mysqli->executeQry($sql);
+				if ($res > 0) {
+					$added++;
+					$record_id = $mysqli->insert_id();
+				} else {
+					$skipped++;
+				}
+			}
+
+			if ($added > 0) {
+				$response['msg_code'] = "00";
+				$response['msg'] = "Enrolled " . (int)$added . " member(s). " . (int)$skipped . " skipped.";
+			} else {
+				$response['msg_code'] = "05";
+				$response['msg'] = "No members were enrolled (duplicates or full capacity).";
+				$record_id = $class_schedule_id;
+			}
+		}
+	}
  } else if ($tab == 'remove_class_member') {
  	$sql = "DELETE FROM " . CLASS_MEMBERS . " WHERE id = " . $id . " LIMIT 1";
  	$res = $mysqli->executeQry($sql);
@@ -1224,8 +1300,14 @@ else if ($tab == 'add_plans') {
 	$paid = (float)$m['paid_amount'];
 	$pending = (float)$m['pending_amount'];
 
-	// Payment history (membership only)
-	$payRes = $mysqli->executeQry("SELECT * FROM " . REVENUE . " WHERE member_id = '" . addslashes($membership_id) . "' AND payment_type='MEMBERSHIP' ORDER BY received_on DESC");
+	// Payment history (membership + PT)
+	$payRes = $mysqli->executeQry("
+		SELECT received_on, payment_type, payment_mode, amount_received, payment_status, pending_amount
+		FROM " . REVENUE . "
+		WHERE member_id = '" . addslashes($membership_id) . "'
+		AND payment_type IN ('MEMBERSHIP','PT')
+		ORDER BY received_on DESC
+	");
 
 	// PT overview
 	$ptRes = $mysqli->executeQry("SELECT pm.*, pp.title AS pt_title, e.name AS trainer_name
@@ -1243,20 +1325,29 @@ else if ($tab == 'add_plans') {
 		WHERE cm.member_id = '" . (int)$member_row_id . "'
 		ORDER BY cm.id DESC");
 
+	// PT overview (rows + totals)
+	$ptRows = [];
+	$ptSessionsDone = 0;
+	$ptSessionsRemaining = 0;
+
 	// PT vs membership warning
 	$warn = '';
 	if ($ptRes) {
-		$ptTop = $mysqli->fetch_assoc($ptRes);
-		if ($ptTop && isset($ptTop['end_date']) && $ptTop['end_date'] > $m['end_date']) {
-			$warn = '<div class="alert alert-warning">PT duration exceeds membership validity. Consider renewing membership.</div>';
+		while ($ptRow = $mysqli->fetch_assoc($ptRes)) {
+			$ptRows[] = $ptRow;
+
+			$totalSessions = isset($ptRow['total_sessions']) ? (int)$ptRow['total_sessions'] : 0;
+			$sessionsUsed = isset($ptRow['sessions_used']) ? (int)$ptRow['sessions_used'] : 0;
+
+			$ptSessionsDone += $sessionsUsed;
+			$remaining = $totalSessions - $sessionsUsed;
+			if ($remaining < 0) $remaining = 0;
+			$ptSessionsRemaining += $remaining;
+
+			if (isset($ptRow['end_date']) && $ptRow['end_date'] > $m['end_date']) {
+				$warn = '<div class="alert alert-warning">PT duration exceeds membership validity. Consider renewing membership.</div>';
+			}
 		}
-		// rewind not possible; re-run
-		$ptRes = $mysqli->executeQry("SELECT pm.*, pp.title AS pt_title, e.name AS trainer_name
-			FROM " . PT_MEMBERS . " pm
-			LEFT JOIN " . PT_PLANS . " pp ON pp.id = pm.pt_plan_id
-			LEFT JOIN " . EMPLOYEES . " e ON e.id = pm.trainer_id
-			WHERE pm.member_id = '" . addslashes($membership_id) . "'
-			ORDER BY pm.id DESC");
 	}
 
 	echo '<div class="mb-3">';
@@ -1279,31 +1370,40 @@ else if ($tab == 'add_plans') {
 	echo '</div>';
 	echo '</div></div>';
 
-	echo '<div class="card mb-3"><div class="card-header"><h6 class="mb-0">Payment History</h6></div><div class="card-body p-0">';
-	echo '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Paid</th><th>Status</th><th>Pending</th></tr></thead><tbody>';
+	echo '<div class="card mb-3"><div class="card-header d-flex justify-content-between align-items-center">';
+	echo '<h6 class="mb-0">Payment History</h6>';
+	echo '<a class="btn btn-sm btn-success" href="index.php?' . $mysqli->encode('stat=payment_history&member_row_id=' . (int)$member_row_id) . '">
+<i class="fa fa-external-link"></i> View Full</a>';
+	echo '</div><div class="card-body p-0">';
+	echo '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Type</th><th>Mode</th><th>Paid</th><th>Status</th><th>Pending</th></tr></thead><tbody>';
 	if ($payRes) {
 		$has = false;
 		while ($pr = $mysqli->fetch_assoc($payRes)) {
 			$has = true;
 			echo '<tr>';
-			echo '<td>' . htmlspecialchars($pr['received_on']) . '</td>';
-			echo '<td>' . htmlspecialchars($pr['amount_received']) . '</td>';
-			echo '<td>' . htmlspecialchars(isset($pr['payment_status']) ? $pr['payment_status'] : 'Paid') . '</td>';
-			echo '<td>' . htmlspecialchars(isset($pr['pending_amount']) ? $pr['pending_amount'] : '') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['received_on'] ?? '') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['payment_type'] ?? '') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['payment_mode'] ?? '') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['amount_received'] ?? '0') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['payment_status'] ?? '') . '</td>';
+			echo '<td>' . htmlspecialchars($pr['pending_amount'] ?? '0') . '</td>';
 			echo '</tr>';
 		}
-		if (!$has) echo '<tr><td colspan="4" class="text-center text-muted">No payments yet.</td></tr>';
+		if (!$has) echo '<tr><td colspan="6" class="text-center text-muted">No payments yet.</td></tr>';
 	} else {
-		echo '<tr><td colspan="4" class="text-center text-muted">No payments yet.</td></tr>';
+		echo '<tr><td colspan="6" class="text-center text-muted">No payments yet.</td></tr>';
 	}
 	echo '</tbody></table></div></div></div>';
 
+	// PT Sessions / Assignments
 	echo '<div class="card mb-3"><div class="card-header"><h6 class="mb-0">PT</h6></div><div class="card-body p-0">';
+	echo '<div class="px-3 pt-2 pb-2">';
+	echo '<div class="d-flex justify-content-between"><span>PT Sessions Done</span><b>' . (int)$ptSessionsDone . '</b></div>';
+	echo '<div class="d-flex justify-content-between mt-1"><span>PT Sessions Remaining</span><b>' . (int)$ptSessionsRemaining . '</b></div>';
+	echo '</div>';
 	echo '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>Plan</th><th>Trainer</th><th>Start</th><th>End</th><th>Status</th></tr></thead><tbody>';
-	if ($ptRes) {
-		$has = false;
-		while ($pt = $mysqli->fetch_assoc($ptRes)) {
-			$has = true;
+	if (!empty($ptRows)) {
+		foreach ($ptRows as $pt) {
 			echo '<tr>';
 			echo '<td>' . htmlspecialchars($pt['pt_title'] ? $pt['pt_title'] : '-') . '</td>';
 			echo '<td>' . htmlspecialchars($pt['trainer_name'] ? $pt['trainer_name'] : '-') . '</td>';
@@ -1312,7 +1412,6 @@ else if ($tab == 'add_plans') {
 			echo '<td>' . htmlspecialchars($pt['status']) . '</td>';
 			echo '</tr>';
 		}
-		if (!$has) echo '<tr><td colspan="5" class="text-center text-muted">No PT assigned.</td></tr>';
 	} else {
 		echo '<tr><td colspan="5" class="text-center text-muted">No PT assigned.</td></tr>';
 	}

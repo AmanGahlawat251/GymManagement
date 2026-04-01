@@ -117,7 +117,7 @@ if ($tab == 'view_members')
 			<div class="col-md-3">
 				<div class="form-group pull-left">
 					<label for="input" class="control-label">Record Limit:<span></span></label>					
-						<select name="record_limit_change" id="record_limit_change" class="form-control">
+						<select name="record_limit_change" id="record_limit_change" class="single-select form-control wide">
 							<option value="10">10</option>
 							<option value="20">20</option>
 							<option value="30">30</option>

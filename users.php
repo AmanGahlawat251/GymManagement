@@ -23,9 +23,6 @@ $pageno = 1;
 			transform: rotate(180deg);
 		}
 
-		.select2-container {
-			z-index: 100000;
-		}
 		
         #video {
             width: 100%;
@@ -59,7 +56,7 @@ $pageno = 1;
 							<path d="M2.125 6.375L8.5 1.41667L14.875 6.375V14.1667C14.875 14.5424 14.7257 14.9027 14.4601 15.1684C14.1944 15.4341 13.8341 15.5833 13.4583 15.5833H3.54167C3.16594 15.5833 2.80561 15.4341 2.53993 15.1684C2.27426 14.9027 2.125 14.5424 2.125 14.1667V6.375Z" stroke="#2C2C2C" stroke-linecap="round" stroke-linejoin="round" />
 							<path d="M6.375 15.5833V8.5H10.625V15.5833" stroke="#2C2C2C" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
-						Dashboard </a>
+						Home </a>
 				</li>
 				<li class="breadcrumb-item active"><a href="javascript:void(0);"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
 							<path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1h8Zm-7.978-1A.261.261 0 0 1 7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002a.274.274 0 0 1-.014.002H7.022ZM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM6.936 9.28a5.88 5.88 0 0 0-1.23-.247A7.35 7.35 0 0 0 5 9c-4 0-5 3-5 4 0 .667.333 1 1 1h4.216A2.238 2.238 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816ZM4.92 10A5.493 5.493 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Zm3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
@@ -221,10 +218,15 @@ $pageno = 1;
 						<div class="col-xl-6 mb-3">
 							<label class="form-label">Membership Type<span class="text-danger">*</span></label>
 							<select id="membership_type_id" name="membership_type_id" class="single-select form-control wide" required>
+							<option value="">Select Membership Type</option>
 								<?php
 								$mt_q = $mysqli->executeQry("SELECT id, name FROM " . MEMBERSHIP_TYPES . " WHERE status='Active' ORDER BY name ASC");
-								while ($mt = $mysqli->fetch_assoc($mt_q)) { ?>
-									<option value="<?php echo $mt['id']; ?>"><?php echo $mt['name']; ?></option>
+								while ($mt = $mysqli->fetch_assoc($mt_q)) {
+									// Default membership type = Individual (if present)
+									//$sel = (isset($mt['name']) && strtolower(trim($mt['name'])) === 'individual') ? 'selected' : '';
+									$sel =  '';
+								?>
+									<option value="<?php echo $mt['id']; ?>" <?php echo $sel; ?>><?php echo $mt['name']; ?></option>
 								<?php } ?>
 							</select>
 						</div>
@@ -584,6 +586,11 @@ include_once("includes/dynamic_table.php") ;
 	$(document).ready(function() {
 		$('.single-select').select2({ dropdownParent: $('#canvas_user') });
 		$('#renew_popup #renew_plans').select2({ dropdownParent: $('#renew_popup') });
+		//getPlans();
+	});
+	
+	// Reload plans when Membership Type changes.
+	$(document).on('change', '#membership_type_id', function () {
 		getPlans();
 	});
 
@@ -668,26 +675,79 @@ include_once("includes/dynamic_table.php") ;
 
 	// Timing removed for gym version.
 
-	function getPlans(){
-		$("#preloader").show();
-		 
-		var tab = "get_plans";
-		$.ajax({
-				  url:"index.php?<?php echo $mysqli->encode('stat=custom_ajax');?>",
-				  method:"POST",
-				  data: {tab:tab,type:'Single'},
-				  success: function (data) {
-							$("#preloader").hide();
-							
-							$('#frm_user #plans').html(data);
-							
-							 // Refresh Bootstrap Select plugin after updating options
-							$('#frm_user #plans').selectpicker('refresh');
-							
-							
-						},
-			   });
-	}
+	function getPlans() {
+    $("#preloader").show();
+
+    var tab = "get_plans";
+    var selectedMembershipType = $('#membership_type_id').find('option:selected').text().trim();
+
+    $.ajax({
+        url: "index.php?<?php echo $mysqli->encode('stat=custom_ajax');?>",
+        method: "POST",
+        data: {
+            tab: tab,
+            type: selectedMembershipType
+        },
+        success: function (data) {
+            $("#preloader").hide();
+
+            var $plans = $('#frm_user #plans');
+            $plans.html(data);
+
+            // Find valid options (exclude empty/placeholder)
+            var validOptions = $plans.find('option').filter(function () {
+                return $(this).val() !== "";
+            });
+
+            if (validOptions.length > 0) {
+                // ✅ Enable dropdown
+                $plans.prop('disabled', false);
+
+                // ✅ Select first available plan
+                var firstPlan = validOptions.first().val();
+                $plans.val(firstPlan).trigger('change');
+
+                // Call base calculation
+                getBase(firstPlan);
+
+            } else {
+                // ❌ No plans available
+
+                // Show message inside dropdown
+                $plans.html('<option value="">No plans available</option>');
+
+                // Disable dropdown
+                $plans.prop('disabled', true);
+
+                // Reset all related fields
+                $('#frm_user #base').val('');
+                $('#final_amount_member').val('0');
+                $('#paid_amount_member').val('0');
+                $('#total_amount').val('0');
+                $('#pending_amount').val('0');
+                $('#end_date').val('');
+
+                // Recalculate if function exists
+                if (typeof recalcPending === 'function') {
+                    recalcPending();
+                }
+
+                // Optional alert (if you use toastr)
+                if (typeof toastr !== 'undefined') {
+                    toastr.warning("No plans available for selected membership type");
+                }
+            }
+        },
+        error: function () {
+            $("#preloader").hide();
+
+            // Handle AJAX failure
+            if (typeof toastr !== 'undefined') {
+                toastr.error("Failed to load plans. Please try again.");
+            }
+        }
+    });
+}
 	function getRenewPlans(type){
 		
 		var tab = "get_plans";

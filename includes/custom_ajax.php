@@ -35,8 +35,26 @@ $logid = $mysqli->Resquest_Response_log("", strtoupper($tab), '', json_encode($_
 if($tab == "get_plans"){
 
 	$html = '';
-	 $sql= "SELECT * from tbl_plans WHERE plan_type = '".$type."'";
+	$type = isset($type) ? trim((string)$type) : '';
+	$sql = "SELECT * from tbl_plans WHERE plan_type = '".$type."'";
 	$result = $mysqli->executeQry($sql);
+
+	// Backward compatible mapping for older plan_type values.
+	// If the selected Membership Type doesn't exist as-is in tbl_plans.plan_type,
+	// try mapping to legacy "Single"/"Family".
+	if (!$result || $mysqli->num_rows($result) === 0) {
+		$typeMap = [
+			'Individual' => 'Individual',
+			'Student' => 'Student',
+			'Couple' => 'Couple',
+			'Corporate' => 'Corporate'
+		];
+		if (isset($typeMap[$type])) {
+			$fallbackType = $typeMap[$type];
+			$sql = "SELECT * from tbl_plans WHERE plan_type = '".$fallbackType."'";
+			$result = $mysqli->executeQry($sql);
+		}
+	}
 	 $html .= '<option value="">Select Plan</option>';
 	while ($row = $mysqli->fetch_assoc($result)) {
 	 extract($row);

@@ -47,7 +47,7 @@ if ($role === 'TRAINER') {
 	$trainer_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 } elseif ($role === 'RECEPTIONIST') {
 	// Receptionists can export only members + attendance (basic reports).
-	$allowedExports = ['export_member', 'export_attendance'];
+	$allowedExports = ['export_member', 'export_attendance', 'export_payment_history'];
 	if (!in_array($tab, $allowedExports, true)) {
 		$response['msg_code'] = "05";
 		$response['msg'] = "Access denied.";
@@ -205,6 +205,69 @@ if ($tab == 'export_attendance') {
 		  $response['redirect'] = 'export/' . basename($file_title);
 		  echo json_encode($response);
 		  exit;
+}
+
+if ($tab == 'export_payment_history') {
+	$member_row_id = isset($member_row_id) ? (int)$member_row_id : 0;
+
+	if ($member_row_id < 1) {
+		$response['msg_code'] = "05";
+		$response['msg'] = "Invalid member.";
+		echo json_encode($response);
+		exit;
+	}
+
+	$memberRow = $mysqli->singleRowAssoc_new('*', MEMBERS, 'id = "' . $member_row_id . '"');
+	if (!$memberRow || empty($memberRow['member_id'])) {
+		$response['msg_code'] = "05";
+		$response['msg'] = "Member not found.";
+		echo json_encode($response);
+		exit;
+	}
+
+	$membership_id = $memberRow['member_id'];
+
+	// Build CSV
+	$files = glob(ABSOLUTE_ROOT_PATH . '/export/*'); // get all file names
+	foreach ($files as $file) {
+		if (is_file($file)) @unlink($file); // delete file
+	}
+
+	$file_title = 'export/payment_history_export_' . time() . '.csv';
+	$file_path = ABSOLUTE_ROOT_PATH . "/" . $file_title;
+	$fp = fopen($file_path, 'w+');
+
+	$head = ['Date', 'Payment_Type', 'Paid', 'Status', 'Pending'];
+	fputcsv($fp, $head);
+
+	$sql = "SELECT received_on, payment_type, amount_received, payment_status, pending_amount
+			FROM " . REVENUE . "
+			WHERE member_id = '" . addslashes($membership_id) . "'
+			AND payment_type IN ('MEMBERSHIP','PT')
+			ORDER BY received_on DESC";
+	$result = $mysqli->executeQry($sql);
+
+	while ($arr = $mysqli->fetch_assoc($result)) {
+		fputcsv($fp, [
+			$arr['received_on'],
+			$arr['payment_type'],
+			$arr['amount_received'],
+			$arr['payment_status'],
+			$arr['pending_amount']
+		]);
+	}
+
+	fclose($fp);
+
+	header('Content-Type: application/csv');
+	header('Content-Disposition: attachment; filename="' . basename($file_title) . '"');
+	header('Pragma: no-cache');
+
+	$response['msg_code'] = '00';
+	$response['msg'] = 'payment history export successful';
+	$response['redirect'] = 'export/' . basename($file_title);
+	echo json_encode($response);
+	exit;
 }
 
 if ($tab == 'export_pt_members') {

@@ -54,7 +54,7 @@ $pageno = 1;
 				$r = $mysqli->executeQry("SELECT COUNT(id) AS c FROM ".ATTENDANCE." WHERE attendance_date='".$today."'");
 				$todayCheckins = (int)($r ? $mysqli->fetch_array($r)['c'] : 0);
 
-				$r = $mysqli->executeQry("SELECT COALESCE(SUM(amount_received),0) AS s FROM ".REVENUE." WHERE payment_type='MEMBERSHIP' AND DATE(received_on) BETWEEN '".$monthStart."' AND '".$monthEnd."'");
+				$r = $mysqli->executeQry("SELECT COALESCE(SUM(amount_received),0) AS s FROM ".REVENUE." WHERE payment_type IN ('MEMBERSHIP','PT') AND DATE(received_on) BETWEEN '".$monthStart."' AND '".$monthEnd."'");
 				$monthlyRevenue = (float)($r ? $mysqli->fetch_array($r)['s'] : 0);
 
 				$r = $mysqli->executeQry("SELECT COUNT(ps.id) AS c
@@ -77,7 +77,7 @@ $pageno = 1;
 				$endYm = array_key_last($revData);
 				$revQ = $mysqli->executeQry("SELECT DATE_FORMAT(received_on,'%Y-%m') AS ym, COALESCE(SUM(amount_received),0) AS s
 					FROM ".REVENUE."
-					WHERE payment_type='MEMBERSHIP' AND DATE_FORMAT(received_on,'%Y-%m') BETWEEN '".$startYm."' AND '".$endYm."'
+					WHERE payment_type IN ('MEMBERSHIP','PT') AND DATE_FORMAT(received_on,'%Y-%m') BETWEEN '".$startYm."' AND '".$endYm."'
 					GROUP BY ym ORDER BY ym ASC");
 				if ($revQ) {
 					while ($row = $mysqli->fetch_assoc($revQ)) {
@@ -334,26 +334,33 @@ $pageno = 1;
 		</div>
 
 		<script>
-			// Chart.js is already included via footer (Chart.bundle.min.js)
-			(function () {
-				if (typeof Chart === 'undefined') return;
-				Chart.defaults.font.family = 'Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial';
-				Chart.defaults.color = '#111827';
-
-				function showNoData(canvasId) {
+			// Render charts once DOM is ready.
+			// Keep this robust: if Chart.js doesn't load (or another script fails), show a clear message.
+			document.addEventListener('DOMContentLoaded', function () {
+				function replaceCanvasWithMessage(canvasId, msg) {
 					var canvas = document.getElementById(canvasId);
 					if (!canvas) return;
 					var parent = canvas.parentNode;
 					if (!parent) return;
-					parent.innerHTML = '<div class="text-muted small">No data available</div>';
+					parent.innerHTML = '<div class="text-muted small">' + msg + '</div>';
 				}
+
+				if (typeof Chart === 'undefined') {
+					replaceCanvasWithMessage('chartRevenue', 'Charts not available (Chart.js failed to load).');
+					replaceCanvasWithMessage('chartCheckins', 'Charts not available (Chart.js failed to load).');
+					replaceCanvasWithMessage('chartTypes', 'Charts not available (Chart.js failed to load).');
+					return;
+				}
+
+				Chart.defaults.font.family = 'Poppins, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+				Chart.defaults.color = '#111827';
 
 				// Monthly Revenue
 				var revLabels = <?php echo json_encode($revLabels); ?>;
 				var revData = <?php echo json_encode($revSeries); ?>;
 				var hasRevData = Array.isArray(revData) && revData.some(function (v) { return Number(v) > 0; });
 				if (!hasRevData) {
-					showNoData('chartRevenue');
+					replaceCanvasWithMessage('chartRevenue', 'No data available');
 				} else {
 					new Chart(document.getElementById('chartRevenue'), {
 						type: 'line',
@@ -383,7 +390,7 @@ $pageno = 1;
 				var chkData = <?php echo json_encode($chkSeries); ?>;
 				var hasChkData = Array.isArray(chkData) && chkData.some(function (v) { return Number(v) > 0; });
 				if (!hasChkData) {
-					showNoData('chartCheckins');
+					replaceCanvasWithMessage('chartCheckins', 'No data available');
 				} else {
 					new Chart(document.getElementById('chartCheckins'), {
 						type: 'bar',
@@ -410,7 +417,7 @@ $pageno = 1;
 				var typeData = <?php echo json_encode($typeSeries); ?>;
 				var hasTypeData = Array.isArray(typeData) && typeData.some(function (v) { return Number(v) > 0; });
 				if (!hasTypeData) {
-					showNoData('chartTypes');
+					replaceCanvasWithMessage('chartTypes', 'No data available');
 				} else {
 					new Chart(document.getElementById('chartTypes'), {
 						type: 'pie',
@@ -424,7 +431,7 @@ $pageno = 1;
 						options: { responsive: true, maintainAspectRatio: false }
 					});
 				}
-			})();
+			});
 		</script>
 
 	</div>

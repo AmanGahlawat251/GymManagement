@@ -18,6 +18,7 @@
     <!-- FAVICONS ICON -->
     <link rel="shortcut icon" type="image/png" href="<?php echo FAVICON_PATH; ?>">
     <link href="./vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+    <link href="./vendor/select2/css/select2.min.css" rel="stylesheet">
     <link href="./vendor/swiper/css/swiper-bundle.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.4/nouislider.min.css">
@@ -37,6 +38,14 @@
 
     <style>
         .swal2-container.swal2-shown { z-index: 99999999999999 !important; }
+		.nav-header {
+    pointer-events: none;
+}
+
+.nav-header .brand-logo,
+.nav-header .nav-control {
+    pointer-events: auto;
+}
     </style>
 
     </head>
@@ -47,11 +56,22 @@
         Preloader start
     ********************-->
     	<div id="preloader">
-    		<div class="lds-ripple">
-    			<div></div>
-    			<div></div>
-    		</div>
-    	</div>
+  <div class="gym-loader-pro">
+    
+    <div class="gym-bars">
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <div class="gym-loader-text">
+      Loading...
+    </div>
+
+  </div>
+</div>
     	<!--*******************
         Preloader end
     ********************-->
@@ -66,7 +86,7 @@
     		<div class="nav-header" style="width: 300px;" >
     			<div class="brand-logo">
     				<a href="index.php" class="brand-link">
-    					<img src="<?php echo LOGO_PATH; ?>" class="logo-abbr" width="50" height="32">
+    					<img src="<?php echo LOGO_PATH; ?>" class="logo-abbr" width="100" height="50">
     				</a>
     				<span class="brand-title">Evosapiens Movement</span>
     			</div>
@@ -118,7 +138,7 @@
     							</li>
 
     							<li class="nav-item ps-3">
-    								<div class="dropdown header-profile2">
+    								<div class="dropdown header-profile2 mt-2">
     									<button type="button" class="nav-link btn p-0 border-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
     										<div class="header-info2 d-flex align-items-center">
     											<div class="header-media">
@@ -129,9 +149,9 @@
 													?>
 
     											</div>
-    											<div class="header-info profile-text">
+    											<div class="header-info profile-text mt-2">
     												<h6><?php echo ucwords($_SESSION['name']); ?></h6>
-    												<p><?php echo strtolower($_SESSION['login_id']); ?></p>
+													
     											</div>
 
     										</div>
@@ -139,18 +159,23 @@
     									<div class="dropdown-menu dropdown-menu-end">
     										<div class="card border-0 mb-0">
     											<div class="card-header py-2">
-    												<div class="products">
-    													<?php
-														
-															echo "<img src='" . DEFAULT_PROFILE_PICTURE . "' style='width:45px; height:45px;' class='avatar avatar-md'/>";
-														
-														?>
-    													<div>
-    														<h6><?php echo ucwords($_SESSION['name']); ?></h6>
-    														<span><?php echo strtolower($_SESSION['login_id']); ?></span>
-    													</div>
-    												</div>
-    											</div>
+    <div class="d-flex align-items-center gap-3">
+
+        <!-- Profile Image -->
+        <?php
+            echo "<img src='" . DEFAULT_PROFILE_PICTURE . "' 
+            class='rounded-circle' 
+            style='width:45px; height:45px; object-fit:cover;' />";
+        ?>
+
+        <!-- User Info -->
+        <div class="flex-grow-1">
+            <h6 class="mb-0 fw-semibold"><?php echo ucwords($_SESSION['name']); ?></h6>
+            <small class="text-muted"><?php echo strtolower($_SESSION['login_id']); ?></small>
+        </div>
+
+    </div>
+</div>
     											<!-- <div class="card-body px-0 py-2">
     												<a href="javascript:void(0)" class="dropdown-item ai-icon ">
     													<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

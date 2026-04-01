@@ -50,6 +50,7 @@ $Encript_arr[] = $mysqli->encode('classes');
 $Encript_arr[] = $mysqli->encode('class_schedule');
 $Encript_arr[] = $mysqli->encode('class_members');
 $Encript_arr[] = $mysqli->encode('messaging');
+$Encript_arr[] = $mysqli->encode('payment_history');
 $Encript_arr[] = $mysqli->encode('membership_types');
 $Encript_arr[] = $mysqli->encode('enquiry');
 $Encript_arr[] = $mysqli->encode('feedback');
@@ -68,7 +69,7 @@ if (!empty($stat)) {
 	$role = $_SESSION['user_type'] ?? '';
 	$role = ($role === 'ADMIN') ? 'SUPERADMIN' : $role;
 	if ($role === 'RECEPTIONIST') {
-		$allowedStats = ['login', 'logout', 'error_404', 'Dashboard', 'users', 'table_response', 'ajax', 'custom_ajax', 'export_ajax'];
+		$allowedStats = ['login', 'logout', 'error_404', 'Dashboard', 'users', 'payment_history', 'table_response', 'ajax', 'custom_ajax', 'export_ajax'];
 		if (!in_array($stat, $allowedStats, true)) {
 			include "error_404.php";
 			exit;
@@ -126,6 +127,10 @@ if (!empty($stat)) {
 
 		case "membership_types":
 			include "membership_types.php";
+			break;
+		
+		case "payment_history":
+			include "payment_history.php";
 			break;
 
 		case "trainer_dashboard":

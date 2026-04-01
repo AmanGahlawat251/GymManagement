@@ -57,7 +57,7 @@
 
 														<form action="" onsubmit="return false;" autocomplete="off" id="frm" method="post">
 															<center>
-															<img style="margin-top: 75px;text-align: center;margin: auto; width:110px;" src="<?php echo LOGO_PATH; ?>" alt="" class="width-230 light-logo">
+															<img style="margin-top: 75px;text-align: center;margin: auto; width:150px;" src="<?php echo LOGO_PATH; ?>" alt="" class="width-230 light-logo">
 																<h3 class="form-title m-t0">Login</h3>
 															</center></br>
 															<div class="dz-separator-outer m-b5">

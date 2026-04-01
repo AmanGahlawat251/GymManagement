@@ -5,7 +5,27 @@
   .nav-header {
     width: 100% !important;
     position: relative;
-    z-index: 10;
+    z-index: 20; /* above header for logo visibility */
+    pointer-events: none; /* don't block header clicks (profile etc.) */
+  }
+
+  .nav-header .brand-logo,
+  .nav-header .nav-control {
+    pointer-events: auto; /* keep logo + hamburger clickable */
+  }
+
+  /* Always show hamburger on mobile even if sidebar style hides it */
+  .nav-header .nav-control,
+  [data-sidebar-style="mini"] .nav-control,
+  [data-layout="horizontal"] .nav-control {
+    display: block !important;
+  }
+
+  /* Ensure logo image is visible */
+  .nav-header .brand-logo img.logo-abbr {
+    display: block !important;
+    max-width: 100%;
+    height: auto;
   }
 
   /* Ensure hamburger (sidebar toggle) is always visible */
