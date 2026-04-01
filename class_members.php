@@ -18,7 +18,15 @@ $pageno = 1;
 	<div class="content-body">
 		<div class="page-titles">
 			<ol class="breadcrumb">
-				<li class="breadcrumb-item"><a href="javascript:void(0);">Class Enrollments</a></li>
+				<li class="breadcrumb-item">
+					<a href="javascript:void(0);">
+						<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M2.125 6.375L8.5 1.41667L14.875 6.375V14.1667C14.875 14.5424 14.7257 14.9027 14.4601 15.1684C14.1944 15.4341 13.8341 15.5833 13.4583 15.5833H3.54167C3.16594 15.5833 2.80561 15.4341 2.53993 15.1684C2.27426 14.9027 2.125 14.5424 2.125 14.1667V6.375Z" stroke="#2C2C2C" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M6.375 15.5833V8.5H10.625V15.5833" stroke="#2C2C2C" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</a>
+				</li>
+				<li class="breadcrumb-item active"><a href="javascript:void(0);">Class Enrollments</a></li>
 			</ol>
 		</div>
 
@@ -31,7 +39,7 @@ $pageno = 1;
 					<input type='hidden' name='download' id='download' value="" />
 					<input type="hidden" name="page" id="page" value="<?php echo $pageno; ?>">
 
-					<div class="row mt-2 g-2">
+					<div class="row mt-2 g-3 align-items-end">
 						<div class="col-xl-3 col-md-6">
 							<label class="form-label">Trainer</label>
 							<select id="class_trainer_filter" name="trainer_id" class="single-select form-control wide">
@@ -45,7 +53,7 @@ $pageno = 1;
 						</div>
 						<div class="col-xl-3 col-md-6">
 							<label class="form-label">Status</label>
-							<select id="class_status_filter" name="class_status" class="form-control">
+							<select id="class_status_filter" name="class_status" class="single-select form-control wide">
 								<option value="">All</option>
 								<option value="Enrolled">Enrolled</option>
 							</select>
@@ -58,17 +66,17 @@ $pageno = 1;
 							<label class="form-label">To Date</label>
 							<input type="date" id="class_to_date_filter" name="to_date" class="form-control" value="<?php echo date('Y-m-d'); ?>">
 						</div>
-						<div class="col-xl-12 d-flex gap-2 mt-1">
-							<button type="button" id="search" class="btn btn-sm btn-primary">Search</button>
-							<button type="button" class="btn btn-sm btn-danger" onclick="window.location.reload();">Reset</button>
-							<a href="javascript:void(0);" onclick="export_class_members()" class="btn btn-sm btn-success text-white ms-auto">
+						<div class="col-12 d-flex flex-wrap gap-2 mt-2">
+							<button type="button" id="search" class="btn btn-primary">Search</button>
+							<button type="button" class="btn btn-danger" onclick="window.location.reload();">Reset</button>
+							<a href="javascript:void(0);" onclick="export_class_members()" class="btn btn-success text-white ms-auto">
 								<i class="fa fa-download"></i> Export CSV
 							</a>
 						</div>
 					</div>
 				</form>
 
-				<div class="card dz-card">
+				<div class="card dz-card mt-2">
 					<div class="card-header flex-wrap">
 						<h4 class="heading mb-0">Class Enrollments</h4>
 						<ul class="nav nav-tabs dzm-tabs" id="myTab" role="tablist">
@@ -114,14 +122,15 @@ $pageno = 1;
 						</div>
 
 						<div class="col-xl-12 mb-3">
-							<label class="form-label">Member<span class="text-danger">*</span></label>
-							<select id="member_id" name="member_id" class="single-select form-control wide" required>
+							<label class="form-label">Members<span class="text-danger">*</span></label>
+							<select id="member_ids" name="member_ids[]" class="multi-select form-control wide" multiple required>
 								<?php
 								$mem_qry = $mysqli->executeQry("SELECT id, member_id, name FROM " . MEMBERS . " WHERE status='Active' ORDER BY id DESC LIMIT 500");
 								while ($m = $mysqli->fetch_assoc($mem_qry)) { ?>
 									<option value="<?php echo $m['id']; ?>"><?php echo $m['member_id']; ?> - <?php echo $m['name']; ?></option>
 								<?php } ?>
 							</select>
+							<div class="small text-muted mt-1" id="class_remaining_hint">Remaining slots: 0</div>
 						</div>
 
 						<input type="hidden" name="tab" value="<?php echo 'enroll_class_member'; ?>" />
@@ -143,6 +152,62 @@ $pageno = 1;
 	?>
 
 	<script>
+		var classRemainingSlots = 0;
+
+		function enforceClassMemberLimit() {
+			var selected = $('#member_ids').val() || [];
+			if (classRemainingSlots < 1) {
+				if (selected.length) {
+					$('#member_ids').val([]).trigger('change');
+				}
+				return;
+			}
+			if (selected.length > classRemainingSlots) {
+				$('#member_ids').val(selected.slice(0, classRemainingSlots)).trigger('change');
+				toastr.warning('Only ' + classRemainingSlots + ' slot(s) remaining. Extra selections were removed.');
+			}
+		}
+
+		function loadClassRemainingCapacity() {
+			var classScheduleId = $('#class_schedule_id').val();
+			if (!classScheduleId) {
+				classRemainingSlots = 0;
+				$('#class_remaining_hint').text('Remaining slots: 0');
+				return;
+			}
+			$.ajax({
+				type: "POST",
+				url: window.AJAX_URL,
+				dataType: "json",
+				data: {
+					tab: 'get_class_remaining_capacity',
+					class_schedule_id: classScheduleId
+				},
+				success: function (obj) {
+					if (obj.msg_code != '00') {
+						toastr.error(obj.msg || 'Unable to check capacity.');
+						return;
+					}
+					classRemainingSlots = parseInt(obj.remaining || 0, 10);
+					$('#class_remaining_hint').text('Remaining slots: ' + classRemainingSlots);
+					enforceClassMemberLimit();
+				},
+				error: function () {
+					toastr.error("Unable to check capacity. Please try again.");
+				}
+			});
+		}
+
+		// Real-time capacity check.
+		$(document).on('change', '#class_schedule_id', function () {
+			$('#member_ids').val([]).trigger('change');
+			loadClassRemainingCapacity();
+		});
+
+		$(document).on('change', '#member_ids', function () {
+			enforceClassMemberLimit();
+		});
+
 		$(document).on('submit', '#frm_enroll', function(e) {
 			e.preventDefault();
 			$('#canvas_enroll').offcanvas('hide');

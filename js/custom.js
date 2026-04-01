@@ -6,8 +6,10 @@ var W3Crm = function () {
 
 
 	var handleSelectPicker = function () {
-		if (jQuery('.default-select,.table-responsive select').length > 0) {
-			jQuery('.default-select,.table-responsive select').selectpicker();
+		// Bootstrap-select conflicts with Select2 (double wrappers + broken widths).
+		// Keep bootstrap-select only for elements that explicitly opt-in via `.selectpicker`.
+		if (jQuery('.selectpicker').length > 0) {
+			jQuery('.selectpicker').selectpicker();
 		}
 	}
 	var handlePreloader = function () {
