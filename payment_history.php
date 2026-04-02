@@ -7,12 +7,12 @@ $pageno = 1;
 // - direct file access: payment_history.php?member_row_id=ID
 // - routed access via index.php?{encoded} where decoded query contains member_row_id=ID
 //   (index.php extracts decoded params into variables before including this file)
-$member_row_id = 0;
-if (isset($member_row_id) && is_numeric($member_row_id)) {
+
+/* if (isset($member_row_id) && is_numeric($member_row_id)) {
 	$member_row_id = (int)$member_row_id;
 } elseif (isset($_GET['member_row_id'])) {
 	$member_row_id = (int)$_GET['member_row_id'];
-}
+} */
 
 $members_qry = $mysqli->executeQry("
 	SELECT id, member_id, name
@@ -49,6 +49,7 @@ if ($member_row_id > 0) {
 		}
 	}
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -172,7 +173,14 @@ if ($member_row_id > 0) {
 			</div>
 		</div>
 	</div>
-
+<?php 
+include_once("includes/footer.php") ; 
+include_once("includes/dynamic_table.php") ; 
+?>
+	<script src="js/croppie.min.js"></script>
+	<script src="vendor/select2/js/select2.full.min.js"></script>
+	<script src="js/cms.js"></script>
+	<script src="js/plugins-init/select2-init.js"></script>
 	<script>
 		function apply_member_filter() {
 			var memberRowId = $('#member_row_id_filter').val();

@@ -151,7 +151,7 @@ if ($tab == 'login') {
 	$duration = (int)$plan_details['duration'];
 	$start_date = date('Y-m-d', strtotime($user_doj));
 	// Treat duration as MONTHS (gym standard)
-	$end_date = date('Y-m-d', strtotime($start_date . " +$duration months -1 day"));
+	$end_date = date('Y-m-d', strtotime($start_date . " +" . ($duration - 1) . " days"));
 	$dob_sql = (isset($dob) && trim($dob) != '') ? ("'" . trim($dob) . "'") : "NULL";
 	$sportsperson = 0;
 	$total_amount = isset($total_amount) && $total_amount !== '' ? (float)$total_amount : (float)$plan_details['price'];
@@ -267,7 +267,7 @@ if ($tab == 'login') {
 						
 						$body .= '<p>Thank you for choosing '.COMPANY_NAME.'! We look forward to helping you achieve your fitness goals.</p>';
 						
-						$body .= '<p style="color:red;"><b>Note:</b> Please note that the gym will be closed on Tuesdays.</p>';
+						//$body .= '<p style="color:red;"><b>Note:</b> Please note that the gym will be closed on Tuesdays.</p>';
 
 
 						$body .= '<p>Best Regards,<br/>'.COMPANY_NAME.'</p>';
@@ -388,7 +388,7 @@ if ($tab == 'login') {
 						 
 						 
 				}
-				$apiKey = "11";
+				/* $apiKey = "11";
 				$employeeCode = $last_id;
 				$employeeName = $user_name;
 				$cardNumber = "Blank";
@@ -396,7 +396,7 @@ if ($tab == 'login') {
 				$userName = "sgar";
 				$userPassword = "Sgar@2024";
 				$commandId = 0;
-				$bio = $mysqli->addEmployee($apiKey, $employeeCode, $employeeName, $cardNumber, $serialNumber, $userName, $userPassword, $commandId); 
+				$bio = $mysqli->addEmployee($apiKey, $employeeCode, $employeeName, $cardNumber, $serialNumber, $userName, $userPassword, $commandId); */ 
 				
 				$response['msg_code'] = "00";
 				$response['msg'] = "Member successfully added.";
