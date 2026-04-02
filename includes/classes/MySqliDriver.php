@@ -1960,126 +1960,145 @@ function verify_otp($otp)
 	}
 	return $otp_verify;
 }
-function generateInvoice($id,$type) {
-    // Initialize file name and HTML content variables
-    $file_name = ''; 
+function generateInvoice($id) {
+
+    $file_name = '';
     $html_content = '';
 
-    $sql = "SELECT * FROM " . MEMBERS . " where id ='".$id."'";
+    // Fetch member
+    $sql = "SELECT * FROM " . MEMBERS . " WHERE id ='".$id."'";
     $result = $this->executeQry($sql);
     $rows = $this->fetch_assoc($result);
-       
-    // Fetch plan details
+
+    // Fetch plan
     $plan_details = $this->singleRowAssoc_new('*', PLANS, 'id = "'.$rows['plan_id'].'"');
-    
-    // Fetch member count
-    $sql123 = "SELECT COUNT(id) AS count_rows FROM ".MEMBERS." WHERE member_id = '".$rows['member_id']."'";
-    $result123 = $this->executeQry($sql123);
-    $num_arr = $this->fetch_array($result123);
-	if($type == 'Single'){
-    $num = $num_arr['count_rows'];
-    }else{
-	$num = 'Family Group';	
-	}
-    // Generate file name for the PDF
+
+    // Membership Type (Dynamic)
+    $membership_type = $rows['membership_type'];
+
+    // Generate Invoice No
+    $invoice_no = 'INV-' . str_pad($rows['id'], 5, '0', STR_PAD_LEFT);
+
     $file_name = 'Invoice_' . date("Ymd") . rand() . ".pdf";
 
-    // HTML content for the invoice
-    $html_content = '<!doctype html>
-    <html lang="en">
+    // Professional HTML
+    $html_content = '
+    <!doctype html>
+    <html>
     <head>
     <meta charset="UTF-8">
-    <title>' . $file_name . '</title>
-    <style type="text/css">
-        * {
-            font-family: Verdana, Arial, sans-serif;
-        }
-        table {
-            font-size: x-small;
-        }
-        tfoot tr td {
-            font-weight: bold;
-            font-size: x-small;
-        }
-        .gray {
-            background-color: lightgray
-        }
+    <style>
+    body { font-family: Arial, sans-serif; color:#333; font-size:12px; }
+    .container { padding:20px; }
+    .header { display:flex; justify-content:space-between; align-items:center; }
+    .logo { width:80px; }
+    .title { font-size:22px; font-weight:bold; }
+    .section { margin-top:20px; }
+    table { width:100%; border-collapse: collapse; margin-top:10px; }
+    th, td { padding:10px; border:1px solid #ddd; }
+    th { background:#f2f2f2; }
+    .right { text-align:right; }
+    .bold { font-weight:bold; }
+    .summary td { border:none; padding:6px; }
+    .highlight { background:#fafafa; font-weight:bold; }
     </style>
     </head>
+
     <body>
-        <table width="100%">
-            <tr>
-                <td align="left">
-                    <img src="' . APPLICATION_URL . 'backend/images/logos/logo.png" class="logo-abbr center" width="70" height="52" />
-                    <h3>Evosapiens Movement</h3>
-                </td>
-            </tr>
-        </table>
-        <table width="100%">
-            <tr>
-                <td><strong>Billed To:</strong> ' . $rows['name'] . '</td>
-            </tr>
-            <tr>
-                <td><strong>Phone No :</strong> ' . $rows['mobile'] . '</td>
-            </tr>
-            <tr>
-                <td><strong>Email :</strong> ' . $rows['email'] . '</td>
-            </tr>
-            <tr>
-                <td><strong>Membership ID:</strong> ' . $rows['member_id'] . '</td>
-            </tr>
-        </table>
-        <br/>
-        <table width="100%">
-            <thead style="background-color: lightgray;">
+    <div class="container">
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <img src="' . APPLICATION_URL . 'backend/images/logos/logo112.png" class="logo">
+                <h2>'.COMPANY_NAME.'</h2>
+            </div>
+            <div class="right">
+                <div class="title">INVOICE</div>
+                <div><b>Invoice No:</b> '.$invoice_no.'</div>
+                <div><b>Date:</b> '.date('d M Y').'</div>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="section">
+            <b>Billed To:</b><br>
+            '.$rows['name'].'<br>
+            '.$rows['email'].'<br>
+            '.$rows['mobile'].'<br>
+            <b>Membership ID:</b> '.$rows['member_id'].'
+        </div>
+
+        <!-- Membership Details -->
+        <div class="section">
+            <b>Membership Details</b>
+            <table>
                 <tr>
-                    <th>#</th>
                     <th>Plan</th>
-                    <th>Base Price</th>
-                    <th>Duration</th>
-                    <th>Members(s)</th>
+                    <th>Membership Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                </tr>
+                <tr>
+                    <td>'.$plan_details['title'].'</td>
+                    <td>'.$membership_type.'</td>
+                    <td>'.$rows['start_date'].'</td>
+                    <td>'.$rows['end_date'].'</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="section">
+            <b>Payment Summary</b>
+            <table>
+                <tr>
+                    <th>Total Amount</th>
                     <th>Paid</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <th scope="row">1</th>
-                    <td>' . $plan_details['title'] . '</td>
-                    <td align="right">' . $plan_details['price'] . '</td>
-                    <td align="right">' . $rows['start_date'] . ' - ' . $rows['end_date'] . '</td>
-                    <td align="right">' . $num . '</td>
-                    <td align="right">' . $rows['discounted_price'] . '</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="4"></td>
-                    <td align="right">Subtotal</td>
-                    <td align="right">' . $rows['discounted_price'] . '</td>
+                    <th>Pending</th>
+                    <th>Status</th>
                 </tr>
                 <tr>
-                    <td colspan="4"></td>
-                    <td align="right">Total</td>
-                    <td align="right" class="gray">' . $rows['discounted_price'] . '</td>
+                    <td class="right">'.$rows['total_amount'].'</td>
+                    <td class="right">'.$rows['paid_amount'].'</td>
+                    <td class="right">'.$rows['pending_amount'].'</td>
+                    <td>'.$rows['payment_status'].'</td>
                 </tr>
-            </tfoot>
-        </table>
-        <table width="100%">
-            <tr>
-                <td>
-                    <p>This invoice is generated by Evosapiens Movement.</p>
-                    <p style="font-style: oblique;">Invoice Generated on - ' . date('d/m/Y H:i') . '</p>
-                </td>
-            </tr>
-        </table>
+            </table>
+        </div>
+
+        <!-- Summary -->
+        <div class="section right">
+            <table class="summary">
+                <tr>
+                    <td>Total:</td>
+                    <td>'.$rows['total_amount'].'</td>
+                </tr>
+                <tr>
+                    <td>Paid:</td>
+                    <td>'.$rows['paid_amount'].'</td>
+                </tr>
+                <tr class="highlight">
+                    <td>Pending:</td>
+                    <td>'.$rows['pending_amount'].'</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="section">
+            <p>Thank you for choosing <b>'.COMPANY_NAME.'</b>.</p>
+            <p><small>Generated on '.date('d/m/Y H:i').'</small></p>
+        </div>
+
+    </div>
     </body>
     </html>';
 
-    // Generate PDF using the HTML content
+    // Generate PDF
     $file_path = ABSOLUTE_ROOT_INV . $file_name;
-    $this->create_pdf($html_content, $file_path,'A5');
-    
-    // Return the file path of the generated PDF
+    $this->create_pdf($html_content, $file_path, 'A4');
+
     return $file_name;
 }
 function createcookie($name,$value)

@@ -38,6 +38,8 @@ else if($_SERVER['HTTP_HOST'] == 'localhost' || $_SERVER['HTTP_HOST'] == 'www.lo
 	define('DATABASE', 'gym');
 	################## DB ############################################
     define("ABSOLUTE_ROOT_PATH", $_SERVER['DOCUMENT_ROOT'].'/gym/');
+	define('Email_domain',"elitecodeexperts.com");
+	define('FROM_EMAIL', 'info@'.Email_domain);
 }
 else
 {

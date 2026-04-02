@@ -148,13 +148,16 @@ if ($tab == 'login') {
 	//print_r($_POST);exit;
 	$membership_type_id = isset($membership_type_id) ? (int)$membership_type_id : 0;
 	$plan_details = $mysqli->singleRowAssoc_new('*', PLANS, 'id = "'.$plans.'"');
-	$total_days = $plan_details['duration'] - 1;
-	$plan_con = '+'.$total_days.' days';
-	$end_date = date('Y-m-d', strtotime($user_doj . $plan_con));
+	$duration = (int)$plan_details['duration'];
+	$start_date = date('Y-m-d', strtotime($user_doj));
+	// Treat duration as MONTHS (gym standard)
+	$end_date = date('Y-m-d', strtotime($start_date . " +$duration months -1 day"));
 	$dob_sql = (isset($dob) && trim($dob) != '') ? ("'" . trim($dob) . "'") : "NULL";
 	$sportsperson = 0;
 	$total_amount = isset($total_amount) && $total_amount !== '' ? (float)$total_amount : (float)$plan_details['price'];
 	$paid = isset($paid) && $paid !== '' ? (float)$paid : 0;
+	$membership_type_data = $mysqli->singleRowAssoc_new('*', MEMBERSHIP_TYPES, 'id = "'.$membership_type_id.'"');
+	$membership_type_name = isset($membership_type_data['name']) ? $membership_type_data['name'] : '';
 	if ($paid < 0) $paid = 0;
 	if ($total_amount < 0) $total_amount = 0;
 	// Validation: Paid Amount must not exceed Final Amount
@@ -203,7 +206,7 @@ if ($tab == 'login') {
 					$paid_amount = "";
 				}
 			   $id_proof_sql = ($id_proof_name != '') ? (", id_proof = '" . addslashes($id_proof_name) . "'") : "";
-			   $sql = "UPDATE " . MEMBERS . " SET membership_type_id = '" . $membership_type_id . "', membership_type = 'Single', plan_id = '" . $plans . "', name = '" . $user_name . "' , email = '" . $user_email . "', mobile= '" . $user_contact . "', gender= '" . $gender . "', age= '" . $age . "' , dob = ".$dob_sql.", address = '" . $user_address . "', joining_date = '" . $user_doj . "', start_date = '" . $user_doj . "', end_date = '" . $end_date . "', picture = '" . $fileName . "' ".$id_proof_sql.", payment_mode = '" . $mode . "', payment_status = '" . $payment_status . "', total_amount = '" . $total_amount . "', paid_amount = '" . $paid . "', pending_amount = '" . $pending_amount . "' ".$paid_amount.", sportsperson = '".$sportsperson."' WHERE id = " . $edit_id;
+			   $sql = "UPDATE " . MEMBERS . " SET membership_type_id = '" . $membership_type_id . "', membership_type = '".$membership_type_name ."', plan_id = '" . $plans . "', name = '" . $user_name . "' , email = '" . $user_email . "', mobile= '" . $user_contact . "', gender= '" . $gender . "', age= '" . $age . "' , dob = ".$dob_sql.", address = '" . $user_address . "', joining_date = '" . $user_doj . "', start_date = '" . $user_doj . "', end_date = '" . $end_date . "', picture = '" . $fileName . "' ".$id_proof_sql.", payment_mode = '" . $mode . "', payment_status = '" . $payment_status . "', total_amount = '" . $total_amount . "', paid_amount = '" . $paid . "', pending_amount = '" . $pending_amount . "' ".$paid_amount.", sportsperson = '".$sportsperson."' WHERE id = " . $edit_id;
 			$res = $mysqli->executeQry($sql);
 			if ($res > 0) {
 					if (true) {
@@ -228,7 +231,7 @@ if ($tab == 'login') {
 			$send_em = 1;
 			}
 			
-			 $sql = "INSERT INTO " . MEMBERS . " SET membership_type_id = '" . $membership_type_id . "', membership_type = 'Single', plan_id = '" . $plans . "',  member_id = '" . $member_id . "', name = '" . $user_name . "' , email = '" . $user_email . "', mobile= '" . $user_contact . "', gender= '" . $gender . "', age= '" . $age . "' , dob = ".$dob_sql.", address = '" . $user_address . "', joining_date = '" . $user_doj . "', start_date = '" . $user_doj . "', end_date = '" . $end_date . "', picture = '" . $fileName . "', id_proof = '" . addslashes($id_proof_name) . "', payment_mode = '" . $mode . "', payment_status = '" . $payment_status . "', total_amount = '" . $total_amount . "', paid_amount = '" . $paid . "', pending_amount = '" . $pending_amount . "', discounted_price = '" . $total_amount . "', status = 'Active', sportsperson = '".$sportsperson."' ".$family_head.", created_on = '".date('Y-m-d H:i:s')."'";
+			 $sql = "INSERT INTO " . MEMBERS . " SET membership_type_id = '" . $membership_type_id . "', membership_type = '".$membership_type_name ."', plan_id = '" . $plans . "',  member_id = '" . $member_id . "', name = '" . $user_name . "' , email = '" . $user_email . "', mobile= '" . $user_contact . "', gender= '" . $gender . "', age= '" . $age . "' , dob = ".$dob_sql.", address = '" . $user_address . "', joining_date = '" . $user_doj . "', start_date = '" . $user_doj . "', end_date = '" . $end_date . "', picture = '" . $fileName . "', id_proof = '" . addslashes($id_proof_name) . "', payment_mode = '" . $mode . "', payment_status = '" . $payment_status . "', total_amount = '" . $total_amount . "', paid_amount = '" . $paid . "', pending_amount = '" . $pending_amount . "', discounted_price = '" . $total_amount . "', status = 'Active', sportsperson = '".$sportsperson."' ".$family_head.", created_on = '".date('Y-m-d H:i:s')."'";
 			$log['sql'] = $sql;
 			$res = $mysqli->executeQry($sql);
 			$last_id = $mysqli->insert_id();
@@ -240,17 +243,17 @@ if ($tab == 'login') {
 				$sql_u = "INSERT INTO " . REVENUE . " SET member_id = '" . $member_id . "', amount_received = '" . $paid . "' , total_amount = '" . $total_amount . "', pending_amount = '" . $pending_amount . "', payment_status = '" . $payment_status . "', payment_mode='" . addslashes($mode) . "', start_date = '" . $user_doj . "' , end_date = '" . $end_date . "' , received_on = '".date('Y-m-d H:i:s')."', payment_type = 'MEMBERSHIP'";
 				$res = $mysqli->executeQry($sql_u);
 				
-				$file = $mysqli->generateInvoice($last_id,'Single');
+				$file = $mysqli->generateInvoice($last_id);
 				if($file){
 				$sql_new = "UPDATE " . MEMBERS . " SET invoice = '".$file."' WHERE id = '" . $last_id."'";
 				$res1 = $mysqli->executeQry($sql_new);
 				}
 				 $plan_details = $mysqli->singleRowAssoc_new('*', PLANS, 'id = "'.$plans.'"');
-				 $subject = 'Welcome to Evosapiens Movement! Your Membership Details Inside | '.$member_id.'';
+				 $subject = 'Welcome to '.COMPANY_NAME.'! Your Membership Details Inside | '.$member_id.'';
 				 
 						$body = '<p>Hello '.$user_name.',</p>';
 						
-						$body .= '<p>We are thrilled to welcome you to Evosapiens Movement! We are excited to have you as a member of our community and cant wait to support you on your fitness journey.</p>';
+						$body .= '<p>We are thrilled to welcome you to '.COMPANY_NAME.'! We are excited to have you as a member of our community and cant wait to support you on your fitness journey.</p>';
 						
 						$body .= '<p>Here are the details of your membership plan:</p>';
 						
@@ -262,15 +265,15 @@ if ($tab == 'login') {
 						
 						$body .= '<p><b>End Date: '.$end_date.'</b></p>';
 						
-						$body .= '<p>Thank you for choosing Evosapiens Movement! We look forward to helping you achieve your fitness goals.</p>';
+						$body .= '<p>Thank you for choosing '.COMPANY_NAME.'! We look forward to helping you achieve your fitness goals.</p>';
 						
 						$body .= '<p style="color:red;"><b>Note:</b> Please note that the gym will be closed on Tuesdays.</p>';
 
 
-						$body .= '<p>Best Regards,<br/>Evosapiens Movement</p>';
+						$body .= '<p>Best Regards,<br/>'.COMPANY_NAME.'</p>';
 						
-						$fromEmail = 'info@swimgymacademy.com';
-						$fromName = "Evosapiens Movement";
+						$fromEmail = FROM_EMAIL;
+						$fromName = COMPANY_NAME;
 						 $toEmail = $user_email;
 						 $attachmentPath = ABSOLUTE_ROOT_INV.$file;
 						
@@ -288,7 +291,7 @@ if ($tab == 'login') {
 						 	created_at = NOW()");
 
 						 // Log WhatsApp attempt (Welcome)
-						 $waMessage = "Hello ".$user_name.", welcome to Evosapiens Movement. Your membership is activated. Keep training!";
+						 $waMessage = "Hello ".$user_name.", welcome to '.COMPANY_NAME.'. Your membership is activated. Keep training!";
 						 $waOk = $mysqli->sendWhatsAppMessage($user_contact, $waMessage);
 						 $waStatus = $waOk ? 'sent' : 'failed';
 						 $mysqli->executeQry("INSERT INTO ".MESSAGE_LOGS." SET
@@ -448,11 +451,11 @@ if ($tab == 'login') {
 									$sql_new = "UPDATE " . MEMBERS . " SET invoice = '".$file."' WHERE id = '" . $member_details['id']."'";
 									$res1 = $mysqli->executeQry($sql_new);
 								}
-								$subject = 'Welcome to Evosapiens Movement! Your Membership Details Inside | '.$member_id.'';
+								$subject = 'Welcome to '.COMPANY_NAME.'! Your Membership Details Inside | '.$member_id.'';
 				 
 								$body = '<p>Hello '.$user_name.',</p>';
 								
-								$body .= '<p>We are thrilled to welcome you to Evosapiens Movement! We are excited to have you as a member of our community and cant wait to support you on your fitness journey.</p>';
+								$body .= '<p>We are thrilled to welcome you to '.COMPANY_NAME.'! We are excited to have you as a member of our community and cant wait to support you on your fitness journey.</p>';
 								
 								$body .= '<p>Here are the details of your membership plan:</p>';
 								
@@ -464,15 +467,15 @@ if ($tab == 'login') {
 								
 								$body .= '<p><b>End Date: '.$new_expiry_date.'</b></p>';
 								
-								$body .= '<p>Thank you for choosing Evosapiens Movement! We look forward to helping you achieve your fitness goals.</p>';
+								$body .= '<p>Thank you for choosing '.COMPANY_NAME.'! We look forward to helping you achieve your fitness goals.</p>';
 								
 								$body .= '<p style="color:red;"><b>Note:</b> Please note that the gym will be closed on Tuesdays.</p>';
 
 
-								$body .= '<p>Best Regards,<br/>Evosapiens Movement</p>';
+								$body .= '<p>Best Regards,<br/>'.COMPANY_NAME.'</p>';
 								
-								$fromEmail = 'info@swimgymacademy.com';
-								$fromName = "Evosapiens Movement";
+								$fromEmail = FROM_EMAIL;
+								$fromName = COMPANY_NAME;
 								 $toEmail = $member_details['email'];
 								 $attachmentPath = ABSOLUTE_ROOT_INV.$file;
 								 $isMail = $mysqli->sendEmails($subject, $body, $attachmentPath, $fromEmail, $fromName, $toEmail,  $toName = '', $bcc = '');
@@ -519,8 +522,8 @@ else if ($tab == 'send_email') {
             $body .= $email_body;
             $body .= '<p>Best Regards,<br/>Evosapiens Movement</p>';
 
-            $fromEmail = 'info@swimgymacademy.com';
-            $fromName = "Evosapiens Movement";
+            $fromEmail = FROM_EMAIL;
+            $fromName = COMPANY_NAME;
             $toEmail = $member_details['email'];
             $attachmentPath = '';
 
